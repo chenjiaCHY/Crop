@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ntschy.crop.dao.AuthorityDao">
+
+    <select id="getUserInfo" resultType="com.ntschy.crop.entity.vo.UserInfoVO">
+        SELECT SU.UserId, SU.Account, SU.Name, SU.Phone, SU.Village, SU.Community, SU.RoleId, SU.CreateTime, SR.Name as RoleName
+        FROM SYS_USER SU
+        LEFT JOIN SYS_ROLE SR ON SU.RoleId = SR.RoleId
+        <where>
+            <if test="userId != null and userId != ''">
+                AND SU.UserId = #{userId,jdbcType=VARCHAR}
+            </if>
+            <if test="account != null and account != ''">
+                AND SU.Account = #{account,jdbcType=VARCHAR}
+            </if>
+            <if test="pwd != null and pwd != ''">
+                AND SU.Password = #{pwd,jdbcType=VARCHAR}
+            </if>
+        </where>
+    </select>
+
+    <insert id="insertLoginToken" parameterType="com.ntschy.crop.entity.vo.LoginToken">
+        INSERT INTO SYS_TOKEN(TokenId, UserId, Token, ExpiresTime, CreateTime, Status)
+        VALUES (#{tokenId}, #{userId}, #{token}, #{expiresTime}, #{createTime}, #{status})
+    </insert>
+
+    <resultMap id="RoleInfoVO" type="com.ntschy.crop.entity.vo.RoleInfoVO">
+        <result column="RoleId" property="roleId"/>
+        <result column="Name" property="roleName"/>
+        <result column="CreateTime" property="createTime"/>
+        <collection property="actionList" ofType="com.ntschy.crop.entity.Action">
+            <result column="ActionId" property="actionId"/>
+            <result column="ActionName" property="actionName"/>
+            <result column="PageName" property="pageName"/>
+        </collection>
+    </resultMap>
+
+    <select id="getRoleInfo" resultMap="RoleInfoVO">
+        SELECT
+            SR.RoleId,
+            SR.Name,
+            SR.CreateTime,
+            SA.ActionId,
+            SA.ActionName,
+            SP.PageName
+        FROM
+            SYS_ROLE SR
+        LEFT JOIN SYS_ROLE_ACTION_MAPPING SRAM ON SRAM.RoleId = SR.RoleId
+        LEFT JOIN SYS_ACTION SA ON SA.ActionId = SRAM.ActionId
+        LEFT JOIN SYS_PAGE SP ON SP.PageId = SA.PageId
+        WHERE SR.RoleId = #{roleId,jdbcType=VARCHAR}
+    </select>
+
+    <select id="getRoleCountById" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM SYS_ROLE
+        WHERE RoleId = #{roleId,jdbcType=VARCHAR}
+    </select>
+
+    <select id="getRoleCountByName" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM SYS_ROLE
+        WHERE RoleId != #{roleId,jdbcType=VARCHAR} AND Name = #{roleName,jdbcType=VARCHAR}
+    </select>
+
+    <delete id="deleteRoleActionMapping">
+        DELETE FROM SYS_ROLE_ACTION_MAPPING
+        WHERE RoleId = #{roleId,jdbcType=VARCHAR}
+    </delete>
+
+    <delete id="deleteRole">
+        DELETE FROM SYS_ROLE
+        WHERE RoleId = #{roleId,jdbcType=VARCHAR}
+    </delete>
+
+    <insert id="insertRoleActionMapping" parameterType="list" useGeneratedKeys="false">
+        INSERT INTO SYS_ROLE_ACTION_MAPPING(RoleId, ActionId)
+        VALUES
+        <foreach collection="mappings" item="item" separator=",">
+            (#{item.roleId,jdbcType=VARCHAR}, #{item.actionId,jdbcType=INTEGER})
+        </foreach>
+    </insert>
+
+    <insert id="insertRole" parameterType="com.ntschy.crop.entity.vo.RoleInfoVO">
+        INSERT INTO SYS_ROLE(RoleId, Name, CreateTime)
+        VALUES (#{roleId,jdbcType=VARCHAR}, #{roleName,jdbcType=VARCHAR}, #{createTime,jdbcType=VARCHAR})
+    </insert>
+
+    <update id="updateRole" parameterType="com.ntschy.crop.entity.vo.RoleInfoVO">
+        UPDATE SYS_ROLE
+        SET Name = #{roleName,jdbcType=VARCHAR}
+        WHERE RoleId = #{roleId,jdbcType=VARCHAR}
+    </update>
+
+    <select id="getUserCountByAccount" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM SYS_USER
+        WHERE UserId != #{userId,jdbcType=VARCHAR} AND Account = #{account,jdbcType=VARCHAR}
+    </select>
+
+    <insert id="insertUser" parameterType="com.ntschy.crop.entity.dto.AddUserRequest">
+        INSERT INTO SYS_USER(UserId, Account, Name, Password, Phone, Village, Community, RoleId, CreateTime)
+        VALUES (#{userId,jdbcType=VARCHAR}, #{account,jdbcType=VARCHAR}, #{name,jdbcType=VARCHAR}, #{password,jdbcType=VARCHAR},
+        #{phone,jdbcType=VARCHAR}, #{village,jdbcType=VARCHAR}, #{community,jdbcType=VARCHAR}, #{roleId,jdbcType=VARCHAR}, #{createTime,jdbcType=VARCHAR})
+    </insert>
+
+    <update id="updateUser">
+        UPDATE SYS_USER
+        SET
+        Name = #{name,jdbcType=VARCHAR},
+        Phone = #{phone,jdbcType=VARCHAR},
+        Village = #{village,jdbcType=VARCHAR},
+        Community = #{community,jdbcType=VARCHAR},
+        RoleId = #{roleId,jdbcType=VARCHAR}
+        WHERE UserId =#{userId,jdbcType=VARCHAR}
+    </update>
+
+    <delete id="deleteUser">
+        DELETE FROM SYS_USER
+        WHERE UserId = #{userId,jdbcType=VARCHAR}
+    </delete>
+
+    <select id="getActionList" resultType="com.ntschy.crop.entity.Action">
+        SELECT SA.ActionId, SA.ActionName, SP.PageName
+        FROM SYS_ACTION SA
+        LEFT JOIN SYS_PAGE SP ON SP.PageId = SA.PageId
+    </select>
+
+    <select id="getFullRoleList" resultType="com.ntschy.crop.entity.vo.RoleInfoVO">
+        SELECT RoleId, Name AS RoleName
+        FROM SYS_ROLE
+        order by CreateTime
+    </select>
+
+    <select id="getRoleCount" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM SYS_ROLE
+        <if test="roleName != null and roleName != ''">
+            WHERE Name LIKE '%'+#{roleName,jdbcType=VARCHAR}+'%'
+        </if>
+    </select>
+
+    <select id="getRoleList" resultType="com.ntschy.crop.entity.vo.RoleInfoVO">
+        SELECT * FROM (
+            SELECT
+                RoleId,
+                Name AS RoleName,
+                CreateTime,
+                ROW_NUMBER() OVER(ORDER BY CreateTime) ROWNO
+            FROM
+                SYS_ROLE
+            <if test="roleName != null and roleName != ''">
+                WHERE Name LIKE '%'+#{roleName,jdbcType=VARCHAR}+'%'
+            </if>
+        ) TABLE_ALIAS
+        WHERE TABLE_ALIAS.ROWNO BETWEEN #{startNo} AND #{endNo}
+    </select>
+
+    <select id="getRoleInUseCount" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM SYS_USER
+        WHERE RoleId = #{roleId,jdbcType=VARCHAR}
+    </select>
+
+    <select id="getUserCount" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM SYS_USER
+        <where>
+            <if test="name != null and name != ''">
+                Name = #{name,jdbcType=VARCHAR}
+            </if>
+        </where>
+    </select>
+
+    <select id="getUserList" resultType="com.ntschy.crop.entity.vo.UserInfoVO">
+        SELECT * FROM (
+            SELECT
+                ROW_NUMBER() OVER(ORDER BY SU.CreateTime) ROWNO,
+                SU.UserId,
+                SU.Account,
+                SU.Name,
+                SU.Phone,
+                SU.Village,
+                SU.Community,
+                SU.RoleId,
+                SR.Name AS RoleName,
+                SU.CreateTime
+            FROM SYS_USER SU
+            LEFT JOIN SYS_ROLE SR ON SU.RoleId = SR.RoleId
+            <where>
+                <if test="name != null and name != ''">
+                    SU.Name = #{name,jdbcType=VARCHAR}
+                </if>
+            </where>
+        ) TABLE_ALIAS
+        WHERE TABLE_ALIAS.ROWNO BETWEEN #{startNo} AND #{endNo}
+    </select>
+
+    <update id="modifyUserPwd">
+        UPDATE SYS_USER
+        SET Password = #{newPwd,jdbcType=VARCHAR}
+        WHERE Account = #{account,jdbcType=VARCHAR}
+    </update>
+
+    <select id="getLoginToken" resultType="com.ntschy.crop.entity.vo.LoginToken">
+        SELECT t.* FROM (
+            SELECT ROW_NUMBER() OVER(ORDER BY CreateTime DESC) ROWNO,
+                TokenId, UserId, Token, ExpiresTime, Status, CreateTime
+            FROM SYS_TOKEN
+            WHERE UserId = #{userId} and ExpiresTime >= #{expiresTime} and Status = 1
+        ) t
+        WHERE ROWNO = 1
+    </select>
+
+    <update id="updateLoginTokenExpiresTime">
+        UPDATE SYS_TOKEN
+        SET ExpiresTime = #{expiresTime}
+        WHERE Token = #{token} AND Status = 1
+    </update>
+
+    <select id="getPasswordByAccount" resultType="java.lang.String">
+        SELECT Password FROM SYS_USER WHERE Account = #{account,jdbcType=VARCHAR}
+    </select>
+
+</mapper>

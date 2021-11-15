@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ntschy.crop.dao.CropDao">
+
+    <select id="getManageCropExportList" parameterType="com.ntschy.crop.entity.dto.ExportCropRequest" resultType="com.ntschy.crop.entity.vo.ManageCropExportVO">
+        SELECT
+            ROW_NUMBER() OVER(ORDER BY OBJECTID) RowNumber,
+            村 as Village,
+            组 as Community,
+            所属户 as Household,
+            联系电话 as Phone,
+            编号 as FieldNumber,
+            Convert(decimal(38,2),面积_亩) as Acreage,
+            是否流转 as IsTransfer,
+            是否林下 as IsForest,
+            种类 as Breed,
+            Season,
+            大棚属性 as GreenhouseCount
+        FROM CROP
+        <where>
+            <if test="request.village != null and request.village != ''">
+                AND 村 = #{request.village,jdbcType=VARCHAR}
+            </if>
+            <if test="request.household != null and request.household != ''">
+                AND 所属户 like '%'+#{request.household,jdbcType=VARCHAR}+'%'
+            </if>
+            <if test="request.breed != null and request.breed != ''">
+                AND 种类 = #{request.breed,jdbcType=VARCHAR}
+            </if>
+            <if test="request.season != null and request.season != ''">
+                AND season = #{request.season,jdbcType=VARCHAR}
+            </if>
+            <if test="request.isTransfer != null and request.isTransfer != ''">
+                AND 是否流转 = #{request.isTransfer,jdbcType=VARCHAR}
+            </if>
+        </where>
+    </select>
+
+    <select id="getManageCropCount" parameterType="com.ntschy.crop.entity.dto.QueryCropRequest" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM CROP
+        <where>
+            <if test="request.village != null and request.village != ''">
+                AND 村 = #{request.village,jdbcType=VARCHAR}
+            </if>
+            <if test="request.household != null and request.household != ''">
+                AND 所属户 like '%'+#{request.household,jdbcType=VARCHAR}+'%'
+            </if>
+            <if test="request.breed != null and request.breed != ''">
+                AND 种类 = #{request.breed,jdbcType=VARCHAR}
+            </if>
+            <if test="request.season != null and request.season != ''">
+                AND season = #{request.season,jdbcType=VARCHAR}
+            </if>
+            <if test="request.isTransfer != null and request.isTransfer != ''">
+                AND 是否流转 = #{request.isTransfer,jdbcType=VARCHAR}
+            </if>
+        </where>
+    </select>
+
+    <select id="getManageCropList" parameterType="com.ntschy.crop.entity.dto.QueryCropRequest" resultType="com.ntschy.crop.entity.vo.CropVO">
+        SELECT * FROM (
+            SELECT
+            ROW_NUMBER() OVER(ORDER BY OBJECTID) ROWNO,
+            村 as Village,
+            组 as Community,
+            所属户 as Household,
+            联系电话 as Phone,
+            编号 as FieldNumber,
+            Convert(decimal(38,2),面积_亩) as Acreage,
+            是否流转 as IsTransfer,
+            是否林下 as IsForest,
+            种类 as Breed,
+            Season,
+            大棚属性 as GreenhouseCount,
+            OBJECTID
+            FROM CROP
+            <where>
+                <if test="request.village != null and request.village != ''">
+                    AND 村 = #{request.village,jdbcType=VARCHAR}
+                </if>
+                <if test="request.household != null and request.household != ''">
+                    AND 所属户 like '%'+#{request.household,jdbcType=VARCHAR}+'%'
+                </if>
+                <if test="request.breed != null and request.breed != ''">
+                    AND 种类 = #{request.breed,jdbcType=VARCHAR}
+                </if>
+                <if test="request.season != null and request.season != ''">
+                    AND season = #{request.season,jdbcType=VARCHAR}
+                </if>
+                <if test="request.isTransfer != null and request.isTransfer != ''">
+                    AND 是否流转 = #{request.isTransfer,jdbcType=VARCHAR}
+                </if>
+            </where>
+        ) TABLE_ALIAS
+        WHERE TABLE_ALIAS.ROWNO BETWEEN #{startNo} AND #{endNo}
+    </select>
+
+    <select id="getVillageStatisticsList" resultType="com.ntschy.crop.entity.vo.VillageExportVO">
+        SELECT t.*, ROW_NUMBER() OVER(ORDER BY T.Village) RowNumber
+        FROM
+        (
+        SELECT 村 AS Village, 种类 AS Breed, Convert(decimal(38,2),SUM(面积_亩)) AS Acreage
+        FROM CROP WHERE Season = #{season,jdbcType=VARCHAR}
+        GROUP BY 村,种类
+        ) t
+    </select>
+
+    <select id="getVillageStatisticsCount" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM (
+            SELECT 村 AS Village, 种类 AS Breed
+            FROM CROP WHERE Season = #{season,jdbcType=VARCHAR}
+            GROUP BY 村,种类
+        ) TEMP
+    </select>
+
+    <select id="getVillageStatisticsPage" resultType="com.ntschy.crop.entity.vo.VillageExportVO">
+        SELECT *
+        FROM
+        (
+            SELECT t.*, ROW_NUMBER() OVER(ORDER BY T.Village) RowNumber
+            FROM
+            (
+                SELECT 村 AS Village, 种类 AS Breed, Convert(decimal(38,2),SUM(面积_亩)) AS Acreage
+                FROM CROP WHERE Season = #{season,jdbcType=VARCHAR}
+                GROUP BY 村,种类
+            ) t
+        ) TABLE_ALIAS
+        WHERE TABLE_ALIAS.RowNumber BETWEEN #{startNo} AND #{endNo}
+    </select>
+
+    <select id="getHouseholdStatisticsList" resultType="com.ntschy.crop.entity.vo.HouseholdExportVO">
+        SELECT t.*, ROW_NUMBER() OVER(ORDER BY T.Household) RowNumber
+        FROM
+        (
+        SELECT 所属户 AS Household, 种类 AS Breed, Convert(decimal(38,2),SUM(面积_亩)) AS Acreage
+        FROM CROP WHERE Season = #{season,jdbcType=VARCHAR} AND 村 = #{village,jdbcType=VARCHAR}
+        GROUP BY 所属户,种类
+        ) t
+    </select>
+
+    <select id="getHouseholdStatisticsCount" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM (
+            SELECT 所属户 AS Household, 种类 AS Breed
+            FROM CROP WHERE Season = #{season,jdbcType=VARCHAR} AND 村 = #{village,jdbcType=VARCHAR}
+            GROUP BY 所属户,种类
+        ) TEMP
+    </select>
+
+    <select id="getHouseholdStatisticsPage" resultType="com.ntschy.crop.entity.vo.HouseholdExportVO">
+        SELECT *
+        FROM
+        (
+            SELECT t.*, ROW_NUMBER() OVER(ORDER BY T.Household) RowNumber
+            FROM
+            (
+                SELECT 所属户 AS Household, 种类 AS Breed, Convert(decimal(38,2),SUM(面积_亩)) AS Acreage
+                FROM CROP WHERE Season = #{season,jdbcType=VARCHAR} AND 村 = #{village,jdbcType=VARCHAR}
+                GROUP BY 所属户,种类
+            ) t
+        ) TABLE_ALIAS
+        WHERE TABLE_ALIAS.RowNumber BETWEEN #{startNo} AND #{endNo}
+    </select>
+
+    <select id="getVillageList" resultType="java.lang.String">
+        SELECT DISTINCT 村 FROM CROP
+    </select>
+
+    <select id="getBreedList" resultType="java.lang.String">
+        SELECT DISTINCT 种类 FROM CROP
+    </select>
+
+    <select id="searchAddress" resultType="com.ntschy.crop.entity.vo.SearchResult">
+        SELECT 村 as Village, 所属户 as Household, 种类 as Breed, Convert(decimal(38,2),面积_亩) as Acreage, Season, OBJECTID
+        FROM CROP
+        WHERE 所属户 like '%'+#{household,jdbcType=VARCHAR}+'%'
+    </select>
+
+    <select id="getAnalyzeResult" parameterType="com.ntschy.crop.entity.dto.AnalyzeRequest" resultType="com.ntschy.crop.entity.vo.AnalyzeResult">
+        SELECT CropAttribute, LayerAttribute, Convert(decimal(38,2), SUM(area)) AS Area
+        FROM (
+            select s.${request.cropAttribute} as CropAttribute, t.${request.layerAttribute} as LayerAttribute, s.Shape.STIntersection(t.Shape).STArea() as area
+            FROM CROP s
+            inner join ${request.layerName} t on s.Shape.STIntersects(t.Shape) = 1
+            WHERE s.Season=#{request.season} and s.UUID IN
+            <foreach collection="request.cropArea" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        ) temp
+        GROUP BY CropAttribute, LayerAttribute
+    </select>
+
+    <select id="getStatistics" resultType="com.ntschy.crop.entity.vo.StatisticsResult">
+        SELECT 种类 as Breed, Convert(decimal(38,2), sum(面积_亩)) AS Area
+        FROM CROP
+        WHERE Season=#{season,jdbcType=VARCHAR}
+        GROUP BY 种类
+    </select>
+</mapper>
