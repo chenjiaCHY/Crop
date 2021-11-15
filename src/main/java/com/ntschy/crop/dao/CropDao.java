@@ -62,4 +62,12 @@ public interface CropDao {
 
     @DataSource("slave1")
     List<StatisticsResult> getStatistics(@Param("season") String season) throws RuntimeException;
+
+    @DataSource("slave1")
+    Integer getFeedbackCount(@Param("status") String status) throws RuntimeException;
+
+    @DataSource("slave1")
+    List<FeedbackVO> getFeedbackList(@Param("status") String status,
+                            @Param("startNo") Integer startNo,
+                            @Param("endNo") Integer endNo) throws RuntimeException;
 }

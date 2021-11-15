@@ -195,4 +195,32 @@
         WHERE Season=#{season,jdbcType=VARCHAR}
         GROUP BY 种类
     </select>
+
+    <select id="getFeedbackCount" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM FEEDBACK
+        <where>
+            <if test="status != null and status != ''">
+                Status = #{status,jdbcType=VARCHAR}
+            </if>
+        </where>
+    </select>
+
+    <select id="getFeedbackList" resultType="com.ntschy.crop.entity.vo.FeedbackVO">
+        SELECT *
+        FROM
+        (
+            SELECT t.*, ROW_NUMBER() OVER(ORDER BY t.FeedbackTime) RowNumber
+            FROM
+            (
+                SELECT OBJECTID, Feedback, FeedbackUser, FeedbackTime, Status, ProcessResult, ProcessUser, ProcessTime
+                FROM FEEDBACK
+                <where>
+                    <if test="status != null and status != ''">
+                        Status = #{status,jdbcType=VARCHAR}
+                    </if>
+                </where>
+            ) t
+        ) TABLE_ALIAS
+        WHERE TABLE_ALIAS.RowNumber BETWEEN #{startNo} AND #{endNo}
+    </select>
 </mapper>

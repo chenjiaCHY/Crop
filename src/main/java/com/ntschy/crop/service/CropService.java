@@ -31,4 +31,6 @@ public interface CropService {
     List<AnalyzeResult> analyze(AnalyzeRequest analyzeRequest) throws RuntimeException;
 
     Result statistics(String season, Integer type) throws RuntimeException;
+
+    PageQuery getFeedback(FeedbackRequest feedbackRequest) throws RuntimeException;
 }

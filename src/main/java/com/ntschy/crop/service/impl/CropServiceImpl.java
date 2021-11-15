@@ -181,7 +181,24 @@ public class CropServiceImpl implements CropService {
             statisticsResultList = statisticsResultList.stream().filter(item -> item.getArea() > 50).collect(Collectors.toList());
         }
 
-
         return new Result<>(statisticsResultList);
+    }
+
+    @Override
+    public PageQuery getFeedback(FeedbackRequest feedbackRequest) throws RuntimeException {
+
+        Integer startNo = PageQuery.startLine(feedbackRequest.getCurrPage(), feedbackRequest.getPageSize());
+        Integer endNo = PageQuery.endLine(feedbackRequest.getCurrPage(), feedbackRequest.getPageSize());
+
+        Integer total = cropDao.getFeedbackCount(feedbackRequest.getStatus());
+
+        List<FeedbackVO> feedbackList = cropDao.getFeedbackList(feedbackRequest.getStatus(), startNo, endNo);
+
+        PageQuery pageQuery = new PageQuery(feedbackRequest.getCurrPage(), feedbackRequest.getPageSize(),
+                total, Optional.ofNullable(feedbackList).orElse(Collections.emptyList()));
+
+        return pageQuery;
+
+
     }
 }

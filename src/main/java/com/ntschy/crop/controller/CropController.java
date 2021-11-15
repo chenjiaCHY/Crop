@@ -296,4 +296,20 @@ public class CropController {
         }
     }
 
+    /**
+     * 获取反馈信息，分页
+     * @param feedbackRequest
+     * @return
+     */
+    @PostMapping("/getFeedback")
+    @ResponseBody
+    public Result getFeedback(@RequestBody @Validated FeedbackRequest feedbackRequest) {
+        try {
+            PageQuery pageQuery = cropService.getFeedback(feedbackRequest);
+            return new Result<>(pageQuery);
+        } catch (Exception e) {
+            return new Result(false, e.getMessage());
+        }
+    }
+
 }
