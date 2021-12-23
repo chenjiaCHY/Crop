@@ -2,6 +2,7 @@ package com.ntschy.crop.controller;
 
 import cn.afterturn.easypoi.excel.ExcelExportUtil;
 import cn.afterturn.easypoi.excel.entity.ExportParams;
+import cn.afterturn.easypoi.excel.entity.enmus.ExcelType;
 import cn.afterturn.easypoi.excel.entity.params.ExcelExportEntity;
 import com.ntschy.crop.entity.base.PageQuery;
 import com.ntschy.crop.entity.base.Result;
@@ -72,7 +73,7 @@ public class CropController {
 
         String fileName = title + ".xlsx";
 
-        Workbook workbook = ExcelExportUtil.exportExcel(new ExportParams(title,"sheet1"), ManageCropExportVO.class, cropList);
+        Workbook workbook = ExcelExportUtil.exportExcel(new ExportParams(title,"sheet1", ExcelType.XSSF), ManageCropExportVO.class, cropList);
         response.setHeader("Content-Type", "application/octet-stream");
         response.setHeader("Content-Disposition", "attachment;filename=" + new String(fileName.getBytes("gb2312"), "ISO8859-1"));
 
@@ -118,7 +119,7 @@ public class CropController {
         String title = "在田作物统计_地区_" + season;
         String fileName = title + ".xlsx";
 
-        Workbook workbook = ExcelExportUtil.exportExcel(new ExportParams(title,"sheet1"), VillageExportVO.class, villageExportVOList);
+        Workbook workbook = ExcelExportUtil.exportExcel(new ExportParams(title,"sheet1", ExcelType.XSSF), VillageExportVO.class, villageExportVOList);
         response.setHeader("Content-Type", "application/octet-stream");
         response.setHeader("Content-Disposition", "attachment;filename=" + new String(fileName.getBytes("gb2312"), "ISO8859-1"));
 
@@ -163,7 +164,7 @@ public class CropController {
         String title = "在田作物统计_" + village + "_" + season;
         String fileName = title + ".xlsx";
 
-        Workbook workbook = ExcelExportUtil.exportExcel(new ExportParams(title,"sheet1"), HouseholdExportVO.class, householdExportVOList);
+        Workbook workbook = ExcelExportUtil.exportExcel(new ExportParams(title,"sheet1", ExcelType.XSSF), HouseholdExportVO.class, householdExportVOList);
         response.setHeader("Content-Type", "application/octet-stream");
         response.setHeader("Content-Disposition", "attachment;filename=" + new String(fileName.getBytes("gb2312"), "ISO8859-1"));
 
