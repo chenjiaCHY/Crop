@@ -163,10 +163,12 @@
 
     <select id="getVillageList" resultType="java.lang.String">
         SELECT DISTINCT 村 FROM CROP
+        WHERE 村 is not null AND 村 != ''
     </select>
 
     <select id="getBreedList" resultType="java.lang.String">
         SELECT DISTINCT 种类 FROM CROP
+        WHERE 种类 is not null AND 种类 != ''
     </select>
 
     <select id="searchAddress" resultType="com.ntschy.crop.entity.vo.SearchResult">
